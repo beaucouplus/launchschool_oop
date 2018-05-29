@@ -2,20 +2,18 @@ require 'pry'
 
 class Participant
   LIMIT = 21
-  attr_reader :cards, :deck, :name
-  attr_accessor :has_stayed
+  attr_reader :cards, :name
 
-  def initialize(deck)
-    @deck = deck
+  def initialize
     @cards = []
     @has_stayed = false
     @name = nil
   end
 
-  def hit
+  def hit(new_card)
     puts "#{name} choses to hit!"
-    deck.deal(self)
-    puts "#{name} gets #{cards.last}"
+    receive_card(new_card)
+    puts "#{name} gets #{new_card}"
     puts ""
   end
 
@@ -33,6 +31,10 @@ class Participant
     has_stayed == true
   end
 
+  def receive_card(new_card)
+    cards << new_card
+  end
+
   def show_cards
     cards.map(&:to_s).join(', ')
   end
@@ -44,16 +46,19 @@ class Participant
     total
   end
 
+  private
+
+  attr_accessor :has_stayed
+
 end
 
 class Player < Participant
   NAME = "Player"
 
-  def initialize(deck)
-    super(deck)
+  def initialize
+    super()
     @name = NAME
   end
-
 
   def to_s
     cards.first(2).map(&:to_s).join(', ')
@@ -76,8 +81,8 @@ class Dealer < Participant
   NAME = "Dealer"
   HIT_LIMIT = 17
 
-  def initialize(deck)
-    super(deck)
+  def initialize
+    super()
     @name = NAME
   end
 
@@ -88,7 +93,6 @@ class Dealer < Participant
   def continues_to_hit?
     total < HIT_LIMIT
   end
-  # can see two cards
 end
 
 
@@ -100,15 +104,11 @@ class Deck
     @cards = init_deck
   end
 
-  def deal(current_player)
-    current_player.cards << pick_card
-  end
-
-  private
-
   def pick_card
     cards.delete(cards.sample)
   end
+
+  private
 
   def init_deck
     faces = [2, 3, 4, 5, 6, 7, 8, 9, 10, :jack, :queen, :king, :ace]
@@ -150,8 +150,8 @@ class Game
 
   def initialize
     @deck = Deck.new
-    @player = Player.new(deck)
-    @dealer = Dealer.new(deck)
+    @player = Player.new
+    @dealer = Dealer.new
     @winner = nil
   end
 
@@ -180,11 +180,11 @@ class Game
 
   def player_turn
     choice = player.decide
-    choice ? player.hit : player.stay
+    choice ? player.hit(deck.pick_card) : player.stay
   end
 
   def dealer_turn
-    dealer.continues_to_hit? ? dealer.hit : dealer.stay
+    dealer.continues_to_hit? ? dealer.hit(deck.pick_card) : dealer.stay
   end
 
   def show_initial_cards
@@ -194,8 +194,8 @@ class Game
   end
 
   def deal_cards
-    2.times { deck.deal(player) }
-    2.times { deck.deal(dealer) }
+    2.times { player.receive_card(deck.pick_card) }
+    2.times { dealer.receive_card(deck.pick_card) }
   end
 
   def show_cards
@@ -243,8 +243,8 @@ class Game
 
   def reset
     self.deck = Deck.new
-    self.player = Player.new(deck)
-    self.dealer = Dealer.new(deck)
+    self.player = Player.new
+    self.dealer = Dealer.new
     self.winner = nil
   end
 end
