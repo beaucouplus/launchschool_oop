@@ -49,7 +49,6 @@ class Participant
   private
 
   attr_accessor :has_stayed
-
 end
 
 class Player < Participant
@@ -69,12 +68,11 @@ class Player < Participant
     answer = nil
     loop do
       answer = gets.chomp
-      break if %w(h s).include?(answer.downcase)
+      break if %w[h s].include?(answer.downcase)
       puts "Wrong choice, please provide H or S"
     end
     true if answer == 'h'
   end
-
 end
 
 class Dealer < Participant
@@ -94,8 +92,6 @@ class Dealer < Participant
     total < HIT_LIMIT
   end
 end
-
-
 
 class Deck
   attr_accessor :cards
@@ -157,17 +153,8 @@ class Game
 
   def start
     loop do
-      reset
-      clear
-      deal_cards
-      show_initial_cards
-      loop do
-        player_turn
-        break opponent_wins(dealer) if player.busted?
-        dealer_turn
-        break opponent_wins(player) if dealer.busted?
-        break compare_cards if player.stays? && dealer.stays?
-      end
+      init_game
+      play_game
       show_cards
       show_result
       break unless play_again?
@@ -176,7 +163,25 @@ class Game
   end
 
   private
+
   attr_accessor :winner, :deck, :player, :dealer
+
+  def init_game
+    reset
+    clear
+    deal_cards
+    show_initial_cards
+  end
+
+  def play_game
+    loop do
+      player_turn
+      break opponent_wins(dealer) if player.busted?
+      dealer_turn
+      break opponent_wins(player) if dealer.busted?
+      break compare_cards if player.stays? && dealer.stays?
+    end
+  end
 
   def player_turn
     choice = player.decide

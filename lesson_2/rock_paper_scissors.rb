@@ -12,16 +12,23 @@
 # Verbs: choose, compare
 
 class Player
-  attr_accessor :move, :name, :score
+  attr_accessor :move, :name, :score, :moves
 
   def initialize
     set_name
     @score = 0
+    @moves = []
   end
 
-  def scored_max?
+  def wins_game?
     score >= 3
   end
+
+  def add_move
+    moves << move.to_s
+  end
+
+
 end
 
 class Human < Player
@@ -49,13 +56,28 @@ class Human < Player
 end
 
 class Computer < Player
+  attr_reader :human_moves
+
   def set_name
     self.name = ['R2D2', 'Hal', 'Chappie', 'Sonny', 'Capsule'].sample
   end
 
   def choose
-    self.move = Move.new(Move::VALUES.sample)
+    self.move = Move.new(choose_best_move.sample)
   end
+
+  def spy(human_moves)
+    @human_moves = human_moves
+  end
+
+  def choose_best_move
+    return Move::VALUES if human_moves.size < 2
+    moves_count = Move::VALUES.each_with_object({}) do |value,hsh|
+      hsh[value] = human_moves.count(value)
+    end
+    moves_count.reject { |move, count| count == moves_count.values.max }.keys
+  end
+
 end
 
 class Move
@@ -100,6 +122,7 @@ class RPSGame
   def initialize
     @human = Human.new
     @computer = Computer.new
+    computer.spy(human.moves)
   end
 
   def display_welcome_message
@@ -118,6 +141,7 @@ class RPSGame
   def display_winner
     if human.move > computer.move
       human.score += 1
+      human.add_move
       puts "#{human.name} won."
     elsif human.move < computer.move
       computer.score += 1
@@ -131,7 +155,7 @@ class RPSGame
   end
 
   def display_set_winner
-    return "#{human.name} wins. Game over" if human.scored_max?
+    return "#{human.name} wins. Game over" if human.wins_game?
     "#{computer.name} wins. Game over"
   end
 
@@ -143,15 +167,15 @@ class RPSGame
       computer.choose
       display_moves
       display_winner
-      puts display_set_winner if someone_scored_max?
-      break if someone_scored_max?
+      puts display_set_winner if someone_wins_game?
+      break if someone_wins_game?
       break unless play_again?
     end
     display_goodbye_message
   end
 
-  def someone_scored_max?
-    human.scored_max? || computer.scored_max?
+  def someone_wins_game?
+    human.wins_game? || computer.wins_game?
   end
 
   def play_again?

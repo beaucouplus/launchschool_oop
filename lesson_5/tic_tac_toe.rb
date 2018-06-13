@@ -163,6 +163,7 @@ class TTTGame
       puts "Sorry. It's not a valid choice"
     end
     board[square] = human.marker
+    board[1] = 
   end
 
   def computer_moves
